@@ -39,7 +39,7 @@ func main() {
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage of yubikey-agent:\n")
 		fmt.Fprintf(os.Stderr, "\n")
-		fmt.Fprintf(os.Stderr, "\tyubikey-agent -setup [-touch-policy=always|cached|never]\n")
+		fmt.Fprintf(os.Stderr, "\tyubikey-agent -setup [-touch-policy=always|cached|never] [-pin-policy=always|once|never]\n")
 		fmt.Fprintf(os.Stderr, "\n")
 		fmt.Fprintf(os.Stderr, "\t\tGenerate a new SSH key on the attached YubiKey.\n")
 		fmt.Fprintf(os.Stderr, "\n")
@@ -53,6 +53,7 @@ func main() {
 	resetFlag := flag.Bool("really-delete-all-piv-keys", false, "setup: reset the PIV applet")
 	setupFlag := flag.Bool("setup", false, "setup: configure a new YubiKey")
 	touchFlag := flag.String("touch-policy", "always", "setup: set the touch policy")
+	pinFlag := flag.String("pin-policy", "once", "setup: set the pin policy")
 	flag.Parse()
 
 	touchPolicy := map[string]piv.TouchPolicy{
@@ -60,6 +61,12 @@ func main() {
 		"cached": piv.TouchPolicyCached,
 		"never":  piv.TouchPolicyNever,
 	}[*touchFlag]
+
+	pinPolicy := map[string]piv.PINPolicy{
+		"always": piv.PINPolicyAlways,
+		"once":   piv.PINPolicyOnce,
+		"never":  piv.PINPolicyNever,
+	}[*pinFlag]
 
 	if flag.NArg() > 0 || touchPolicy == 0 {
 		flag.Usage()
@@ -72,7 +79,7 @@ func main() {
 		if *resetFlag {
 			runReset(yk)
 		}
-		runSetup(yk, touchPolicy)
+		runSetup(yk, touchPolicy, pinPolicy)
 	} else {
 		if *socketPath == "" {
 			flag.Usage()
