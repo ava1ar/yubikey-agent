@@ -47,6 +47,10 @@ func main() {
 		fmt.Fprintf(os.Stderr, "\n")
 		fmt.Fprintf(os.Stderr, "\t\tRun the agent, listening on the UNIX socket at PATH.\n")
 		fmt.Fprintf(os.Stderr, "\n")
+		fmt.Fprintf(os.Stderr, "\tyubikey-agent -get-management-key\n")
+		fmt.Fprintf(os.Stderr, "\n")
+		fmt.Fprintf(os.Stderr, "\t\tGet the (pin-protected) management key.")
+		fmt.Fprintf(os.Stderr, "\n")
 	}
 
 	socketPath := flag.String("l", "", "agent: path of the UNIX socket to listen on")
@@ -54,6 +58,7 @@ func main() {
 	setupFlag := flag.Bool("setup", false, "setup: configure a new YubiKey")
 	touchFlag := flag.String("touch-policy", "always", "setup: set the touch policy")
 	pinFlag := flag.String("pin-policy", "once", "setup: set the pin policy")
+	getManagementFlag := flag.Bool("get-management-key", false, "get the (pin protected) management key")
 	flag.Parse()
 
 	touchPolicy := map[string]piv.TouchPolicy{
@@ -68,7 +73,7 @@ func main() {
 		"never":  piv.PINPolicyNever,
 	}[*pinFlag]
 
-	if flag.NArg() > 0 || touchPolicy == 0 {
+	if flag.NArg() > 0 || touchPolicy == 0 || pinPolicy == 0 {
 		flag.Usage()
 		os.Exit(1)
 	}
@@ -80,6 +85,8 @@ func main() {
 			runReset(yk)
 		}
 		runSetup(yk, touchPolicy, pinPolicy)
+	} else if *getManagementFlag {
+		getManagementKey(connectForSetup())
 	} else {
 		if *socketPath == "" {
 			flag.Usage()
